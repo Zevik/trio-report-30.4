@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+  <head>
+    <base target="_top">
+    <style>
+      body { font-family: Arial, sans-serif; padding: 20px; }
+      select, button { font-size: 16px; padding: 5px; }
+      table { border-collapse: collapse; margin-top: 20px; width: 100%; }
+      th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+      th { background-color: #f0f0f0; }
+    </style>
+  </head>
+  <body>
+    <h2>דוח שעות חודשי לפי סטודנט</h2>
+    <label for="monthSelect">בחר חודש:</label>
+    <select id="monthSelect"></select>
+    <button onclick="loadReport()">הצג דוח</button>
+
+    <div id="output"></div>
+
+    <script>
+      function formatMonthLabel(key) {
+        const [year, month] = key.split('-');
+        return `${month}/${year}`;
+      }
+
+      function loadMonths() {
+        google.script.run.withSuccessHandler(months => {
+          const select = document.getElementById('monthSelect');
+          months.forEach(month => {
+            const opt = document.createElement('option');
+            opt.value = month;
+            opt.textContent = formatMonthLabel(month);
+            select.appendChild(opt);
+          });
+        }).getAvailableMonths();
+      }
+
+      function loadReport() {
+        const month = document.getElementById('monthSelect').value;
+        if (!month) return;
+
+        google.script.run.withSuccessHandler(report => {
+          const container = document.getElementById('output');
+          if (report.length === 0) {
+            container.innerHTML = '<p>אין נתונים עבור חודש זה.</p>';
+            return;
+          }
+
+          let html = '<table><tr><th>סטודנט</th><th>סך שעות</th></tr>';
+          report.forEach(row => {
+            html += `<tr><td>${row.name}</td><td>${row.total}</td></tr>`;
+          });
+          html += '</table>';
+          container.innerHTML = html;
+        }).getMonthlyReport(month);
+      }
+
+      loadMonths();
+    </script>
+  </body>
+</html>
