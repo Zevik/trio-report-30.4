@@ -3,39 +3,33 @@
   <head>
     <base target="_top">
     <style>
-      body { font-family: Arial, sans-serif; padding: 20px; }
-      select, button { font-size: 16px; padding: 5px; margin-right: 5px; }
-      h2 { margin-bottom: 20px; }
-      table { border-collapse: collapse; margin-top: 20px; width: 100%; }
-      th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
-      th { background-color: #f0f0f0; }
-      .export-buttons { margin-top: 20px; display: none; }
+      body { font-family: Arial, sans-serif; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+      select, button { font-size: 16px; padding: 8px; margin: 10px 0; }
+      h1 { margin-bottom: 30px; text-align: center; }
+      .container { text-align: center; max-width: 500px; }
+      .form-group { margin: 15px 0; }
       .loading { display: none; text-align: center; margin: 20px; }
-      .export-buttons button { margin-right: 10px; }
-      .label { font-weight: bold; }
-      .header-row { background-color: #e0e0e0; }
-      .total-row { background-color: #f7f7f7; font-weight: bold; }
-      .report-title { text-align: center; font-size: 18px; font-weight: bold; margin: 20px 0; }
+      .export-button { margin-top: 20px; display: none; }
+      button { background-color: #4285f4; color: white; border: none; border-radius: 4px; cursor: pointer; }
+      button:hover { background-color: #3367d6; }
     </style>
   </head>
   <body>
-    <h2>דוח שעות חודשי לרפואנים</h2>
-    
-    <div>
-      <label for="monthSelect">בחר חודש:</label>
-      <select id="monthSelect"></select>
+    <div class="container">
+      <h1>דוח שעות חודשי לרפואנים</h1>
+      
+      <div class="form-group">
+        <label for="monthSelect">בחר חודש:</label>
+        <select id="monthSelect"></select>
+      </div>
+      
       <button onclick="loadReport()">הצג דוח</button>
-    </div>
-    
-    <div class="loading" id="loading">טוען נתונים...</div>
-    
-    <div id="reportHeader"></div>
-    <div id="output"></div>
-    
-    <div class="export-buttons" id="exportButtons">
-      <button onclick="exportToExcel()">הורד כקובץ Excel</button>
-      <button onclick="exportToCSV()">הורד כקובץ CSV</button>
-      <button onclick="createGoogleSheet()">צור גיליון Google</button>
+      
+      <div class="loading" id="loading">טוען נתונים...</div>
+      
+      <div class="export-button" id="exportButtons">
+        <button onclick="exportToExcel()">הורד כקובץ Excel</button>
+      </div>
     </div>
 
     <script>
@@ -64,11 +58,12 @@
       
       function loadReport() {
         const month = document.getElementById('monthSelect').value;
-        if (!month) return;
+        if (!month) {
+          alert('יש לבחור חודש');
+          return;
+        }
         
         showLoading(true);
-        document.getElementById('output').innerHTML = '';
-        document.getElementById('reportHeader').innerHTML = '';
         document.getElementById('exportButtons').style.display = 'none';
 
         google.script.run.withSuccessHandler(report => {
@@ -76,111 +71,13 @@
           showLoading(false);
           
           if (!report.data || report.data.length === 0) {
-            document.getElementById('output').innerHTML = '<p>אין נתונים עבור חודש זה.</p>';
+            alert('אין נתונים עבור חודש זה');
             return;
           }
           
-          // הצגת כותרת הדוח
-          document.getElementById('reportHeader').innerHTML = 
-            `<div class="report-title">דוח שעות עבודה רפואנים לחודש ${report.monthName}</div>`;
-          
-          // יצירת מבנה הטבלה
-          renderReportTable(report);
-          
-          // הצגת כפתורי הייצוא
+          // הצגת כפתור הורדה
           document.getElementById('exportButtons').style.display = 'block';
         }).getMonthlyReport(month);
-      }
-      
-      function renderReportTable(report) {
-        const container = document.getElementById('output');
-        let html = '<table>';
-        
-        // כותרות עליונות
-        html += '<tr class="header-row">';
-        html += '<th rowspan="2">שם</th>';
-        html += '<th colspan="2">רפואה שלמה</th>';
-        html += '<th colspan="2">מיזם טריו</th>';
-        html += '<th colspan="2">דמו</th>';
-        html += '<th colspan="2">הכשרה</th>';
-        html += '<th colspan="2">מיקום משמרת</th>';
-        html += '</tr>';
-        
-        // כותרות משנה
-        html += '<tr class="header-row">';
-        // רפואה שלמה
-        html += '<th>שעות</th><th>משמרות</th>';
-        // מיזם טריו
-        html += '<th>שעות</th><th>משמרות</th>';
-        // דמו
-        html += '<th>שעות</th><th>משמרות</th>';
-        // הכשרה
-        html += '<th>שעות</th><th>משמרות</th>';
-        // מיקום משמרת
-        html += '<th>בית</th><th>מרפאה</th>';
-        html += '</tr>';
-        
-        // נתוני הדוח
-        report.data.forEach(student => {
-          html += '<tr>';
-          
-          // שם
-          html += `<td>${student.name}</td>`;
-          
-          // רפואה שלמה
-          renderShiftTypeColumns(html, student, 'רפואה שלמה');
-          
-          // מיזם טריו
-          renderShiftTypeColumns(html, student, 'מיזם טריו');
-          
-          // דמו
-          renderShiftTypeColumns(html, student, 'דמו');
-          
-          // הכשרה
-          renderShiftTypeColumns(html, student, 'הכשרה');
-          
-          // מיקום משמרת
-          html += `<td>${getLocationShifts(student, 'בית')}</td>`;
-          html += `<td>${getLocationShifts(student, 'מרפאה')}</td>`;
-          
-          html += '</tr>';
-        });
-        
-        html += '</table>';
-        container.innerHTML = html;
-      }
-      
-      function renderShiftTypeColumns(html, student, shiftType) {
-        const key = `${shiftType}_hours`;
-        const shiftKey = `${shiftType}_shifts`;
-        const totalKey = `${shiftType}_total_hours`;
-        const totalShiftsKey = `${shiftType}_total_shifts`;
-        
-        if (student[key] && student[totalKey]) {
-          const totalHours = student[totalKey];
-          const totalShifts = student[totalShiftsKey] || 0;
-          
-          // רק אם יש ערך שאינו אפס, נציג אותו
-          html += `<td>${totalHours !== '00:00' ? totalHours : ''}</td>`;
-          html += `<td>${totalShifts > 0 ? totalShifts : ''}</td>`;
-        } else {
-          html += '<td></td><td></td>';
-        }
-      }
-      
-      function getLocationShifts(student, location) {
-        let total = 0;
-        const shiftTypes = ['רפואה שלמה', 'דמו', 'הכשרה', 'מיזם טריו'];
-        
-        for (const type of shiftTypes) {
-          const key = `${type}_shifts`;
-          if (student[key] && student[key][location]) {
-            total += student[key][location];
-          }
-        }
-        
-        // רק אם יש ערך שאינו אפס, נציג אותו
-        return total > 0 ? total : '';
       }
       
       function exportToExcel() {
@@ -194,32 +91,6 @@
             link.click();
           })
           .createExcelFile(currentReport);
-      }
-      
-      function exportToCSV() {
-        if (!currentReport) return;
-        
-        google.script.run
-          .withSuccessHandler(url => {
-            const link = document.createElement('a');
-            link.href = url;
-            link.target = '_blank';
-            link.click();
-          })
-          .createCSVFile(currentReport);
-      }
-      
-      function createGoogleSheet() {
-        if (!currentReport) return;
-        
-        google.script.run
-          .withSuccessHandler(url => {
-            const link = document.createElement('a');
-            link.href = url;
-            link.target = '_blank';
-            link.click();
-          })
-          .createGoogleSheet(currentReport);
       }
 
       loadMonths();
