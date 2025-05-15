@@ -271,12 +271,17 @@ function getMonthName(monthKey) {
 
 /**
  * יוצר קובץ אקסל מהדוח ומחזיר URL להורדה
+ * משתמש בגיליון קבוע במקום ליצור חדש בכל פעם
  * @param {Object} report - דוח השעות המלא
  * @return {string} URL לקובץ האקסל
  */
 function createExcelFile(report) {
-  const spreadsheet = SpreadsheetApp.create(`דוח שעות רפואנים - ${report.monthName}`);
+  const FIXED_SPREADSHEET_ID = '1I_3XUG7FHR-SNUZ0MDOOpioCRl3TjmkzxO4QYICb-UM';
+  const spreadsheet = SpreadsheetApp.openById(FIXED_SPREADSHEET_ID);
   const sheet = spreadsheet.getActiveSheet();
+  
+  // מחיקת כל התוכן הקודם בגיליון
+  sheet.clear();
   
   // יצירת כותרת הדוח
   sheet.getRange("A1").setValue(`דוח שעות עבודה רפואנים לחודש ${report.monthName}`);
@@ -340,8 +345,8 @@ function createExcelFile(report) {
   // כיוון טקסט מימין לשמאל
   sheet.setRightToLeft(true);
   
-  // יצירת קובץ לייצוא
-  const url = `https://docs.google.com/spreadsheets/d/${spreadsheet.getId()}/export?format=xlsx`;
+  // יצירת קובץ לייצוא - שימוש ב-ID הקבוע
+  const url = `https://docs.google.com/spreadsheets/d/${FIXED_SPREADSHEET_ID}/export?format=xlsx`;
   
   return url;
 }
