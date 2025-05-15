@@ -449,16 +449,20 @@ function addShiftTypeToCSVRow(row, student, shiftType) {
 }
 
 /**
- * יוצר גיליון גוגל שיטס חדש עם הדוח ומחזיר URL לפתיחתו
+ * פותח את גיליון Google Sheets הקבוע עם הדוח ומחזיר URL לפתיחתו
  * @param {Object} report - דוח השעות המלא
- * @return {string} URL לגיליון שנוצר
+ * @return {string} URL לגיליון
  */
 function createGoogleSheet(report) {
-  // יוצר את אותו הגיליון כמו בפונקציית createExcelFile
-  // אבל מחזיר URL ישיר אליו במקום להוריד אותו
+  // משתמש באותו גיליון קבוע כמו בפונקציית createExcelFile
+  // מחזיר URL ישיר אליו
   
-  const spreadsheet = SpreadsheetApp.create(`דוח שעות רפואנים - ${report.monthName}`);
+  const FIXED_SPREADSHEET_ID = '1I_3XUG7FHR-SNUZ0MDOOpioCRl3TjmkzxO4QYICb-UM';
+  const spreadsheet = SpreadsheetApp.openById(FIXED_SPREADSHEET_ID);
   const sheet = spreadsheet.getActiveSheet();
+  
+  // מחיקת כל התוכן הקודם בגיליון
+  sheet.clear();
   
   // יצירת כותרת הדוח
   sheet.getRange("A1").setValue(`דוח שעות עבודה רפואנים לחודש ${report.monthName}`);
@@ -522,5 +526,6 @@ function createGoogleSheet(report) {
   // כיוון טקסט מימין לשמאל
   sheet.setRightToLeft(true);
   
+  // מחזיר את הקישור לגיליון הקבוע
   return spreadsheet.getUrl();
 }
